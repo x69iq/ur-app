@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>أُور - تطبيق الخرائط والملاحة</title>
+  <title>أُور - خرائط وملاحة العراق</title>
 
   <!-- Leaflet CSS & FontAwesome -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -27,7 +27,6 @@
       color: #ffffff;
     }
 
-    /* الحاويات والشاشات */
     .screen {
       position: absolute;
       inset: 0;
@@ -41,7 +40,6 @@
       display: flex;
     }
 
-    /* 1. Onboarding & Forms */
     .center-content {
       flex: 1;
       display: flex;
@@ -84,7 +82,6 @@
       background: #0284c7;
     }
 
-    /* الأزرار العامة */
     .btn {
       width: 100%;
       padding: 16px;
@@ -109,14 +106,12 @@
     .btn-danger { background: #ef4444; color: #fff; }
     .btn-text { background: transparent; color: #64748b; margin-top: 12px; }
 
-    /* 2. Main Map View */
     #map {
       width: 100%;
       height: 100%;
       z-index: 1;
     }
 
-    /* شريط التوجيه العلوي للملاحة */
     .nav-banner {
       position: absolute;
       top: 12px;
@@ -132,7 +127,6 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
-    /* عداد السرعة الأنيق */
     .speedometer {
       position: absolute;
       bottom: 220px;
@@ -150,7 +144,6 @@
       box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     }
 
-    /* الأدوات الجانبية العائمة */
     .floating-tools {
       position: absolute;
       right: 16px;
@@ -175,7 +168,6 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    /* القائمة السفلية */
     .bottom-sheet {
       position: absolute;
       bottom: 0;
@@ -223,7 +215,6 @@
       cursor: pointer;
     }
 
-    /* قائمة الإعدادات */
     .settings-list {
       display: flex;
       flex-direction: column;
@@ -242,7 +233,6 @@
       border: 1px solid #334155;
     }
 
-    /* بطاقات النوافذ المنبثقة */
     .modal-card {
       position: absolute;
       top: 80px;
@@ -259,9 +249,7 @@
 </head>
 <body>
 
-  <!-- ================= ================= -->
   <!-- 1. شاشة التهيئة الأولى (Onboarding) -->
-  <!-- ================= ================= -->
   <div class="screen active" id="onboardingScreen">
     <div class="center-content">
       <div class="icon-circle" id="slideIcon"><i class="fa-solid fa-compass"></i></div>
@@ -279,22 +267,18 @@
     </div>
   </div>
 
-  <!-- ================= ================= -->
-  <!-- 2. شاشة الأذونات (Permissions)      -->
-  <!-- ================= ================= -->
+  <!-- 2. شاشة الأذونات (Permissions) -->
   <div class="screen" id="permissionsScreen">
     <div class="center-content">
       <div class="icon-circle" style="background: #0284c7;"><i class="fa-solid fa-shield-halved"></i></div>
       <h2 style="font-size: 22px; margin-bottom: 12px;">تفعيل التنبيهات والـ GPS</h2>
-      <p style="color: #94a3b8; line-height: 1.5; margin-bottom: 30px;">لتزويدك بأفضل مسار وتنبيهك قبل الازحامات والكاميرات، نحتاج إلى إذن الوصول للموقع الإشعارات.</p>
+      <p style="color: #94a3b8; line-height: 1.5; margin-bottom: 30px;">لتزويدك بأفضل مسار وتنبيهك قبل الازحامات والكاميرات، نحتاج إلى إذن الوصول للموقع والإشعارات.</p>
       <button class="btn btn-primary" onclick="showScreen('quickSetupScreen')">تفعيل التنبيهات والموقع</button>
       <button class="btn btn-text" onclick="showScreen('mainScreen')">ليس الآن</button>
     </div>
   </div>
 
-  <!-- ================= ================= -->
   <!-- 3. شاشة التهيئة السريعة (Quick Setup) -->
-  <!-- ================= ================= -->
   <div class="screen" id="quickSetupScreen" style="padding: 24px;">
     <h2 style="font-size: 24px; margin-top: 20px; margin-bottom: 8px;">العناوين السريعة</h2>
     <p style="color: #94a3b8; margin-bottom: 30px;">اختر عناوينك المفضلة لتسهيل الوصول إليها بنقرة واحدة.</p>
@@ -323,12 +307,8 @@
     <button class="btn btn-primary" onclick="showScreen('mainScreen')">حفظ والدخول للخريطة</button>
   </div>
 
-  <!-- ================= ================= -->
   <!-- 4. الشاشة الرئيسية والخريطة (Main View) -->
-  <!-- ================= ================= -->
   <div class="screen" id="mainScreen">
-    
-    <!-- الخريطة -->
     <div id="map"></div>
 
     <!-- زر الإعدادات العلوي -->
@@ -356,7 +336,7 @@
       <span style="font-size: 8px; color: #94a3b8;">كم/س</span>
     </div>
 
-    <!-- شريط التوجيه العلوي (عند بدء الملاحة) -->
+    <!-- شريط التوجيه العلوي -->
     <div class="nav-banner" id="navBanner" style="display: none;">
       <div style="display: flex; align-items: center; gap: 16px;">
         <i class="fa-solid fa-arrow-turn-up-right" style="font-size: 32px;"></i>
@@ -367,7 +347,7 @@
       </div>
     </div>
 
-    <!-- بطاقة التحديد المباشر عند النقر المطول -->
+    <!-- بطاقة التحديد المباشر -->
     <div class="modal-card" id="pinCard" style="display: none;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <span style="font-weight: bold; font-size: 18px;">النقطة المحددة على الخريطة</span>
@@ -389,7 +369,7 @@
         <div class="chip" onclick="showScreen('searchScreen')"><i class="fa-solid fa-plus"></i> إضافة وجهة</div>
       </div>
 
-      <!-- معاينة المسار والتأكيد -->
+      <!-- معاينة المسار -->
       <div id="routePreviewCard" style="display: none; background: #1e293b; border-radius: 16px; padding: 16px; border: 1px solid #0284c7; margin-top: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
           <span style="font-size: 22px; font-weight: bold;">7 دقائق</span>
@@ -402,7 +382,7 @@
         </div>
       </div>
 
-      <!-- أزرار التحكم أثناء الملاحة -->
+      <!-- أزرار الملاحة النشطة -->
       <div id="navActiveControls" style="display: none; justify-content: space-between; align-items: center; margin-top: 10px;">
         <div>
           <div style="font-size: 22px; font-weight: bold;">23:49</div>
@@ -413,9 +393,7 @@
     </div>
   </div>
 
-  <!-- ================= ================= -->
-  <!-- 5. شاشة البحث (Search View)        -->
-  <!-- ================= ================= -->
+  <!-- 5. شاشة البحث (Search View) -->
   <div class="screen" id="searchScreen" style="padding: 20px;">
     <div style="display: flex; align-items: center; gap: 12px; background: #1e293b; border-radius: 16px; padding: 8px 16px; margin-bottom: 20px;">
       <i class="fa-solid fa-arrow-right" style="cursor: pointer;" onclick="showScreen('mainScreen')"></i>
@@ -439,9 +417,7 @@
     </div>
   </div>
 
-  <!-- ================= ================= -->
-  <!-- 6. شاشة الوصول (Arrived View)     -->
-  <!-- ================= ================= -->
+  <!-- 6. شاشة الوصول (Arrived View) -->
   <div class="screen" id="arrivedScreen">
     <div class="center-content">
       <div class="icon-circle" style="background: #22c55e;"><i class="fa-solid fa-flag-checkered"></i></div>
@@ -451,9 +427,7 @@
     </div>
   </div>
 
-  <!-- ================= ================= -->
   <!-- 7. شاشة الإعدادات الكاملة (Settings) -->
-  <!-- ================= ================= -->
   <div class="screen" id="settingsScreen" style="padding: 20px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #334155; padding-bottom: 16px;">
       <h2 style="font-size: 20px;">الإعدادات</h2>
@@ -493,7 +467,6 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    // التنقل بين الشاشات
     function showScreen(screenId) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(screenId).classList.add('active');
@@ -502,7 +475,6 @@
       }
     }
 
-    // إدارة شرائح Onboarding
     const slides = [
       { title: "مسارك الأنسب، دائماً", desc: "خوارزميات ذكية لتفادي الاختناقات المرورية وحساب دقيق لوقت الوصول.", icon: "fa-compass" },
       { title: "عينك الحية على الطريق", desc: "تحديثات وتنبيهات مباشرة لحظة بلحظة عن حالة الشوارع من السائقين.", icon: "fa-eye" },
@@ -524,15 +496,18 @@
       }
     }
 
-    // تهيئة الخريطة بأسلوب داكن
+    // تهيئة الخريطة بطلاء OpenStreetMap المجاني بالكامل
     const map = L.map('map', { zoomControl: false }).setView([33.3152, 44.3661], 14);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
 
     let isNavigating = false;
     let activePolyline = null;
     let soundMuted = false;
 
-    // النقر المطول/العادي على الخريطة لتحديد موقع
     map.on('click', function(e) {
       if (!isNavigating) {
         document.getElementById('pinCard').style.display = 'block';
@@ -561,7 +536,7 @@
       document.getElementById('navActiveControls').style.display = 'flex';
 
       const routeCoords = [[33.3152, 44.3661], [33.3200, 44.3680], [33.3250, 44.3720]];
-      activePolyline = L.polyline(routeCoords, { color: '#38bdf8', weight: 6 }).addTo(map);
+      activePolyline = L.polyline(routeCoords, { color: '#0284c7', weight: 6 }).addTo(map);
       map.fitBounds(activePolyline.getBounds(), { padding: [50, 50] });
     }
 
