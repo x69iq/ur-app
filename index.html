@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>أُور - خرائط وملاحة العراق</title>
+  <title>أُور - تطبيق الخرائط والملاحة</title>
 
-  <!-- Leaflet CSS -->
+  <!-- Leaflet CSS & FontAwesome -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
@@ -16,8 +14,9 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body, html {
@@ -28,78 +27,152 @@
       color: #ffffff;
     }
 
+    /* الحاويات والشاشات */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      z-index: 10;
+      background-color: #0f172a;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    /* 1. Onboarding & Forms */
+    .center-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .icon-circle {
+      width: 90px;
+      height: 90px;
+      border-radius: 45px;
+      background: #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 25px rgba(2, 132, 199, 0.4);
+    }
+
+    .dots-indicator {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 30px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 4px;
+      background: #334155;
+      transition: all 0.3s;
+    }
+
+    .dot.active {
+      width: 24px;
+      background: #0284c7;
+    }
+
+    /* الأزرار العامة */
+    .btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: 16px;
+      border: none;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: opacity 0.2s;
+    }
+
+    .btn:active {
+      opacity: 0.8;
+    }
+
+    .btn-primary { background: #0284c7; color: #fff; }
+    .btn-secondary { background: #1e293b; color: #fff; border: 1px solid #334155; }
+    .btn-danger { background: #ef4444; color: #fff; }
+    .btn-text { background: transparent; color: #64748b; margin-top: 12px; }
+
+    /* 2. Main Map View */
     #map {
       width: 100%;
       height: 100%;
       z-index: 1;
     }
 
-    /* الشريط العلوي للتوجيه */
+    /* شريط التوجيه العلوي للملاحة */
     .nav-banner {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      right: 10px;
+      top: 12px;
+      left: 12px;
+      right: 12px;
       background: #0284c7;
-      border-radius: 18px;
+      border-radius: 20px;
       padding: 16px 20px;
       z-index: 1000;
-      display: none;
+      display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
-    .nav-banner.active {
-      display: flex;
-    }
-
-    .nav-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .nav-info i {
-      font-size: 32px;
-    }
-
-    .nav-text .dist {
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .nav-text .street {
-      font-size: 14px;
-      opacity: 0.9;
-    }
-
-    /* عداد السرعة */
+    /* عداد السرعة الأنيق */
     .speedometer {
       position: absolute;
-      bottom: 180px;
+      bottom: 220px;
       left: 16px;
-      width: 60px;
-      height: 60px;
+      width: 64px;
+      height: 64px;
       background: #1e293b;
       border: 2px solid #0284c7;
-      border-radius: 30px;
+      border-radius: 32px;
       z-index: 1000;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     }
 
-    .speed-val {
-      font-size: 18px;
-      font-weight: bold;
+    /* الأدوات الجانبية العائمة */
+    .floating-tools {
+      position: absolute;
+      right: 16px;
+      top: 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 1000;
     }
 
-    .speed-unit {
-      font-size: 8px;
-      color: #94a3b8;
+    .tool-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 22px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
     /* القائمة السفلية */
@@ -114,210 +187,407 @@
       padding: 20px;
       z-index: 1000;
       border-top: 1px solid #334155;
-      box-shadow: 0 -5px 25px rgba(0,0,0,0.5);
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
     }
 
-    .search-box {
+    .search-trigger {
       background: #1e293b;
-      border-radius: 14px;
-      padding: 12px 16px;
+      border-radius: 16px;
+      padding: 14px 18px;
       display: flex;
       align-items: center;
       gap: 12px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      color: #94a3b8;
+    }
+
+    .quick-chips {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
       margin-bottom: 12px;
     }
 
-    .search-box input {
-      background: transparent;
-      border: none;
-      outline: none;
-      color: #fff;
-      font-size: 16px;
-      width: 100%;
-    }
-
-    .btn-primary {
-      width: 100%;
-      background: #0284c7;
-      color: #fff;
-      border: none;
-      padding: 14px;
-      border-radius: 14px;
-      font-size: 16px;
-      font-weight: bold;
+    .chip {
+      background: #1e293b;
+      padding: 8px 16px;
+      border-radius: 20px;
+      white-space: nowrap;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid #334155;
       cursor: pointer;
     }
 
-    .btn-danger {
-      background: #ef4444;
+    /* قائمة الإعدادات */
+    .settings-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      margin-top: 16px;
     }
 
-    .floating-btn {
+    .setting-item {
+      background: #1e293b;
+      padding: 16px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #334155;
+    }
+
+    /* بطاقات النوافذ المنبثقة */
+    .modal-card {
       position: absolute;
-      right: 16px;
-      bottom: 180px;
-      width: 48px;
-      height: 48px;
+      top: 80px;
+      left: 20px;
+      right: 20px;
       background: #0f172a;
       border: 1px solid #334155;
-      border-radius: 24px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      cursor: pointer;
-    }
-
-    /* نافذة الوصول للوجهة */
-    .arrival-modal {
-      position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.95);
+      border-radius: 20px;
+      padding: 16px;
       z-index: 2000;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center;
-    }
-
-    .arrival-modal.active {
-      display: flex;
-    }
-
-    .icon-box {
-      width: 80px;
-      height: 80px;
-      background: #22c55e;
-      border-radius: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
   </style>
 </head>
 <body>
 
-  <!-- الخريطة -->
-  <div id="map"></div>
+  <!-- ================= ================= -->
+  <!-- 1. شاشة التهيئة الأولى (Onboarding) -->
+  <!-- ================= ================= -->
+  <div class="screen active" id="onboardingScreen">
+    <div class="center-content">
+      <div class="icon-circle" id="slideIcon"><i class="fa-solid fa-compass"></i></div>
+      <h2 id="slideTitle" style="font-size: 24px; margin-bottom: 12px;">مسارك الأنسب، دائماً</h2>
+      <p id="slideDesc" style="color: #94a3b8; line-height: 1.5; margin-bottom: 30px;">خوارزميات ذكية لتفادي الاختناقات المرورية وحساب دقيق لوقت الوصول.</p>
+      
+      <div class="dots-indicator">
+        <div class="dot active" id="dot0"></div>
+        <div class="dot" id="dot1"></div>
+        <div class="dot" id="dot2"></div>
+      </div>
 
-  <!-- شريط التوجيه المباشر -->
-  <div class="nav-banner" id="navBanner">
-    <div class="nav-info">
-      <i class="fa-solid fa-turn-right"></i>
-      <div class="nav-text">
-        <div class="dist" id="turnDist">70 م</div>
-        <div class="street" id="nextStreet">انعطف يميناً نحو طريق كركوك - بغداد</div>
+      <button class="btn btn-primary" onclick="nextSlide()">التالي</button>
+      <button class="btn btn-text" onclick="showScreen('mainScreen')">تخطي والدخول كزائر</button>
+    </div>
+  </div>
+
+  <!-- ================= ================= -->
+  <!-- 2. شاشة الأذونات (Permissions)      -->
+  <!-- ================= ================= -->
+  <div class="screen" id="permissionsScreen">
+    <div class="center-content">
+      <div class="icon-circle" style="background: #0284c7;"><i class="fa-solid fa-shield-halved"></i></div>
+      <h2 style="font-size: 22px; margin-bottom: 12px;">تفعيل التنبيهات والـ GPS</h2>
+      <p style="color: #94a3b8; line-height: 1.5; margin-bottom: 30px;">لتزويدك بأفضل مسار وتنبيهك قبل الازحامات والكاميرات، نحتاج إلى إذن الوصول للموقع الإشعارات.</p>
+      <button class="btn btn-primary" onclick="showScreen('quickSetupScreen')">تفعيل التنبيهات والموقع</button>
+      <button class="btn btn-text" onclick="showScreen('mainScreen')">ليس الآن</button>
+    </div>
+  </div>
+
+  <!-- ================= ================= -->
+  <!-- 3. شاشة التهيئة السريعة (Quick Setup) -->
+  <!-- ================= ================= -->
+  <div class="screen" id="quickSetupScreen" style="padding: 24px;">
+    <h2 style="font-size: 24px; margin-top: 20px; margin-bottom: 8px;">العناوين السريعة</h2>
+    <p style="color: #94a3b8; margin-bottom: 30px;">اختر عناوينك المفضلة لتسهيل الوصول إليها بنقرة واحدة.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px;">
+      <div class="setting-item" onclick="alert('تم اختيار عنوان السكن')">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <i class="fa-solid fa-house" style="color: #0284c7; font-size: 20px;"></i>
+          <div>
+            <div style="font-weight: bold;">البيت</div>
+            <div style="font-size: 12px; color: #64748b;">تحديد عنوان السكن</div>
+          </div>
+        </div>
+      </div>
+      <div class="setting-item" onclick="alert('تم اختيار عنوان العمل')">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <i class="fa-solid fa-briefcase" style="color: #eab308; font-size: 20px;"></i>
+          <div>
+            <div style="font-weight: bold;">العمل</div>
+            <div style="font-size: 12px; color: #64748b;">تحديد عنوان مكان العمل</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="showScreen('mainScreen')">حفظ والدخول للخريطة</button>
+  </div>
+
+  <!-- ================= ================= -->
+  <!-- 4. الشاشة الرئيسية والخريطة (Main View) -->
+  <!-- ================= ================= -->
+  <div class="screen" id="mainScreen">
+    
+    <!-- الخريطة -->
+    <div id="map"></div>
+
+    <!-- زر الإعدادات العلوي -->
+    <div class="floating-tools" style="left: 16px; right: auto;">
+      <div class="tool-btn" onclick="showScreen('settingsScreen')">
+        <i class="fa-solid fa-gear"></i>
+      </div>
+    </div>
+
+    <!-- الأدوات الجانبية للملاحة -->
+    <div class="floating-tools" id="navTools" style="display: none;">
+      <div class="tool-btn" onclick="alert('تفعيل راديو الطريق/الموسيقى')"><i class="fa-solid fa-music"></i></div>
+      <div class="tool-btn" id="voiceToggle" onclick="toggleVoice()"><i class="fa-solid fa-volume-high"></i></div>
+      <div class="tool-btn" style="background: #d97706;" onclick="alert('إبلاغ عن ازدحام أو حادث')"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    </div>
+
+    <!-- زر إعادة التوسيط -->
+    <div class="tool-btn" style="position: absolute; right: 16px; bottom: 220px; z-index: 1000;" onclick="recenterMap()">
+      <i class="fa-solid fa-location-crosshairs" style="color: #0284c7;"></i>
+    </div>
+
+    <!-- عداد السرعة -->
+    <div class="speedometer" id="speedoMeter" style="display: none;">
+      <span style="font-size: 18px; font-weight: bold;">45</span>
+      <span style="font-size: 8px; color: #94a3b8;">كم/س</span>
+    </div>
+
+    <!-- شريط التوجيه العلوي (عند بدء الملاحة) -->
+    <div class="nav-banner" id="navBanner" style="display: none;">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <i class="fa-solid fa-arrow-turn-up-right" style="font-size: 32px;"></i>
+        <div>
+          <div style="font-size: 24px; font-weight: bold;">70 م</div>
+          <div style="font-size: 14px; opacity: 0.9;">انعطف يميناً نحو طريق كركوك - بغداد</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بطاقة التحديد المباشر عند النقر المطول -->
+    <div class="modal-card" id="pinCard" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span style="font-weight: bold; font-size: 18px;">النقطة المحددة على الخريطة</span>
+        <i class="fa-solid fa-xmark" style="cursor: pointer; color: #94a3b8;" onclick="closePinCard()"></i>
+      </div>
+      <button class="btn btn-primary" onclick="selectRouteFromPin()">🚀 التوجيه نحو هذه النقطة</button>
+    </div>
+
+    <!-- القائمة السفلية -->
+    <div class="bottom-sheet" id="bottomSheet">
+      <div class="search-trigger" id="searchTrigger" onclick="showScreen('searchScreen')">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>إلى أين تتجه اليوم؟</span>
+      </div>
+
+      <div class="quick-chips">
+        <div class="chip" onclick="previewRoute('البيت')"><i class="fa-solid fa-house" style="color: #0284c7;"></i> البيت</div>
+        <div class="chip" onclick="previewRoute('العمل')"><i class="fa-solid fa-briefcase" style="color: #eab308;"></i> العمل</div>
+        <div class="chip" onclick="showScreen('searchScreen')"><i class="fa-solid fa-plus"></i> إضافة وجهة</div>
+      </div>
+
+      <!-- معاينة المسار والتأكيد -->
+      <div id="routePreviewCard" style="display: none; background: #1e293b; border-radius: 16px; padding: 16px; border: 1px solid #0284c7; margin-top: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 22px; font-weight: bold;">7 دقائق</span>
+          <span style="color: #94a3b8; font-size: 14px;">2.3 كم</span>
+        </div>
+        <p style="color: #94a3b8; font-size: 13px; margin-bottom: 16px;">عبر طريق كركوك - بغداد • أفضل مسار</p>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn btn-primary" style="flex: 1;" onclick="startNavigation()">انطلق الآن</button>
+          <button class="btn btn-secondary" style="width: auto;" onclick="cancelRoutePreview()">إلغاء</button>
+        </div>
+      </div>
+
+      <!-- أزرار التحكم أثناء الملاحة -->
+      <div id="navActiveControls" style="display: none; justify-content: space-between; align-items: center; margin-top: 10px;">
+        <div>
+          <div style="font-size: 22px; font-weight: bold;">23:49</div>
+          <div style="color: #94a3b8; font-size: 13px;">2.3 كم • 7 دقائق متبقية</div>
+        </div>
+        <button class="btn btn-danger" style="width: auto; padding: 12px 24px;" onclick="finishTrip()">إنهاء</button>
       </div>
     </div>
   </div>
 
-  <!-- عداد السرعة -->
-  <div class="speedometer">
-    <div class="speed-val" id="speedVal">45</div>
-    <div class="speed-unit">كم/س</div>
-  </div>
-
-  <!-- زر إعادة التوسيط -->
-  <div class="floating-btn" id="recenterBtn" onclick="recenterMap()">
-    <i class="fa-solid fa-location-crosshairs"></i>
-  </div>
-
-  <!-- الشريط السفلي -->
-  <div class="bottom-sheet" id="bottomSheet">
-    <div class="search-box">
-      <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8;"></i>
-      <input type="text" placeholder="إلى أين تتجه اليوم؟" id="searchInput" />
+  <!-- ================= ================= -->
+  <!-- 5. شاشة البحث (Search View)        -->
+  <!-- ================= ================= -->
+  <div class="screen" id="searchScreen" style="padding: 20px;">
+    <div style="display: flex; align-items: center; gap: 12px; background: #1e293b; border-radius: 16px; padding: 8px 16px; margin-bottom: 20px;">
+      <i class="fa-solid fa-arrow-right" style="cursor: pointer;" onclick="showScreen('mainScreen')"></i>
+      <input type="text" placeholder="أين تريد الذهاب؟" style="background: transparent; border: none; outline: none; color: #fff; font-size: 16px; width: 100%;" autoFocus />
     </div>
 
-    <div id="routePreview" style="display: none; margin-bottom: 12px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <span style="font-size: 20px; font-weight: bold;">7 دقائق</span>
-        <span style="color: #94a3b8;">2.3 كم</span>
+    <div class="quick-chips" style="margin-bottom: 20px;">
+      <div class="chip"><i class="fa-solid fa-gas-pump" style="color: #0284c7;"></i> محطات وقود</div>
+      <div class="chip"><i class="fa-solid fa-mug-hot" style="color: #eab308;"></i> مقاهي ومطاعم</div>
+    </div>
+
+    <p style="color: #94a3b8; font-size: 14px; margin-bottom: 12px;">المواقع الأخيرة</p>
+    <div class="setting-item" style="margin-bottom: 10px; cursor: pointer;" onclick="showScreen('mainScreen'); previewRoute('شارع عدن');">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <i class="fa-solid fa-location-dot" style="color: #0284c7;"></i>
+        <div>
+          <div style="font-weight: bold;">شارع عدن - بغداد</div>
+          <div style="font-size: 12px; color: #64748b;">مركز المدينة</div>
+        </div>
       </div>
-      <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">عبر طريق كركوك - بغداد • أفضل مسار</p>
     </div>
-
-    <button class="btn-primary" id="actionBtn" onclick="toggleNavigation()">انطلق الآن</button>
   </div>
 
-  <!-- نافذة الوصول للوجهة -->
-  <div class="arrival-modal" id="arrivalModal">
-    <div class="icon-box"><i class="fa-solid fa-flag-checkered"></i></div>
-    <h2 style="font-size: 24px; margin-bottom: 8px;">وصلت إلى وجهتك بالسلامة!</h2>
-    <p style="color: #94a3b8; margin-bottom: 24px;">استغرقت الرحلة 7 دقائق (2.3 كم)</p>
-    <button class="btn-primary" onclick="closeArrivalModal()">العودة للخريطة</button>
+  <!-- ================= ================= -->
+  <!-- 6. شاشة الوصول (Arrived View)     -->
+  <!-- ================= ================= -->
+  <div class="screen" id="arrivedScreen">
+    <div class="center-content">
+      <div class="icon-circle" style="background: #22c55e;"><i class="fa-solid fa-flag-checkered"></i></div>
+      <h2 style="font-size: 24px; margin-bottom: 8px;">وصلت إلى وجهتك بالسلامة!</h2>
+      <p style="color: #94a3b8; margin-bottom: 30px;">استغرقت الرحلة 7 دقائق (2.3 كم)</p>
+      <button class="btn btn-primary" onclick="showScreen('mainScreen')">العودة للخريطة</button>
+    </div>
+  </div>
+
+  <!-- ================= ================= -->
+  <!-- 7. شاشة الإعدادات الكاملة (Settings) -->
+  <!-- ================= ================= -->
+  <div class="screen" id="settingsScreen" style="padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid #334155; padding-bottom: 16px;">
+      <h2 style="font-size: 20px;">الإعدادات</h2>
+      <i class="fa-solid fa-xmark" style="font-size: 24px; cursor: pointer;" onclick="showScreen('mainScreen')"></i>
+    </div>
+
+    <p style="color: #0284c7; font-weight: bold; font-size: 14px; margin-bottom: 12px;">نمط القيادة والمركبة</p>
+    <div class="settings-list" style="margin-bottom: 24px;">
+      <div class="setting-item">
+        <span>تجنب الطرق المزدحمة</span>
+        <input type="checkbox" checked style="accent-color: #0284c7; width: 20px; height: 20px;" />
+      </div>
+      <div class="setting-item">
+        <span>تجنب الطرق ذات الرسوم</span>
+        <input type="checkbox" style="accent-color: #0284c7; width: 20px; height: 20px;" />
+      </div>
+    </div>
+
+    <p style="color: #0284c7; font-weight: bold; font-size: 14px; margin-bottom: 12px;">الدعم والخروج</p>
+    <div class="settings-list">
+      <div class="setting-item" onclick="alert('مركز المساعدة والدعم الفني')">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <i class="fa-solid fa-circle-question" style="color: #94a3b8;"></i>
+          <span>مركز المساعدة</span>
+        </div>
+      </div>
+      <div class="setting-item" style="border-color: #ef4444;" onclick="exitApp()">
+        <div style="display: flex; align-items: center; gap: 12px; color: #ef4444;">
+          <i class="fa-solid fa-power-off"></i>
+          <span style="font-weight: bold;">إغلاق التطبيق والخروج</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <script>
-    const map = L.map('map', { zoomControl: false }).setView([33.3152, 44.3661], 14);
+    // التنقل بين الشاشات
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      if (screenId === 'mainScreen') {
+        setTimeout(() => { map.invalidateSize(); }, 200);
+      }
+    }
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      attribution: '© OpenStreetMap & CartoDB'
-    }).addTo(map);
+    // إدارة شرائح Onboarding
+    const slides = [
+      { title: "مسارك الأنسب، دائماً", desc: "خوارزميات ذكية لتفادي الاختناقات المرورية وحساب دقيق لوقت الوصول.", icon: "fa-compass" },
+      { title: "عينك الحية على الطريق", desc: "تحديثات وتنبيهات مباشرة لحظة بلحظة عن حالة الشوارع من السائقين.", icon: "fa-eye" },
+      { title: "استكشف مدينتك بذكاء", desc: "احفظ وجهاتك المفضلة وانطلق نحو وجهتك بلمسة واحدة.", icon: "fa-map-location-dot" }
+    ];
+    let currentSlide = 0;
+
+    function nextSlide() {
+      currentSlide++;
+      if (currentSlide >= slides.length) {
+        showScreen('permissionsScreen');
+      } else {
+        document.getElementById('slideTitle').innerText = slides[currentSlide].title;
+        document.getElementById('slideDesc').innerText = slides[currentSlide].desc;
+        document.getElementById('slideIcon').innerHTML = `<i class="fa-solid ${slides[currentSlide].icon}"></i>`;
+        for (let i = 0; i < 3; i++) {
+          document.getElementById(`dot${i}`).classList.toggle('active', i === currentSlide);
+        }
+      }
+    }
+
+    // تهيئة الخريطة بأسلوب داكن
+    const map = L.map('map', { zoomControl: false }).setView([33.3152, 44.3661], 14);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
 
     let isNavigating = false;
-    let userMarker, activePolyline;
+    let activePolyline = null;
+    let soundMuted = false;
 
-    const routeCoords = [
-      [33.3152, 44.3661],
-      [33.3200, 44.3680],
-      [33.3250, 44.3720]
-    ];
-
-    userMarker = L.marker([33.3152, 44.3661]).addTo(map);
-
-    function toggleNavigation() {
-      const btn = document.getElementById('actionBtn');
-      const banner = document.getElementById('navBanner');
-      const preview = document.getElementById('routePreview');
-
+    // النقر المطول/العادي على الخريطة لتحديد موقع
+    map.on('click', function(e) {
       if (!isNavigating) {
-        isNavigating = true;
-        btn.innerText = "إنهاء الرحلة";
-        btn.classList.add("btn-danger");
-        banner.classList.add("active");
-        preview.style.display = "block";
-
-        activePolyline = L.polyline(routeCoords, { color: '#38bdf8', weight: 6, opacity: 0.9 }).addTo(map);
-        map.fitBounds(activePolyline.getBounds(), { padding: [50, 50] });
-
-        setTimeout(() => {
-          if (isNavigating) finishTrip();
-        }, 6000);
-
-      } else {
-        finishTrip();
+        document.getElementById('pinCard').style.display = 'block';
       }
+    });
+
+    function closePinCard() { document.getElementById('pinCard').style.display = 'none'; }
+    function selectRouteFromPin() { closePinCard(); previewRoute('النقطة المحددة'); }
+
+    function previewRoute(destination) {
+      document.getElementById('searchTrigger').style.display = 'none';
+      document.getElementById('routePreviewCard').style.display = 'block';
+    }
+
+    function cancelRoutePreview() {
+      document.getElementById('searchTrigger').style.display = 'flex';
+      document.getElementById('routePreviewCard').style.display = 'none';
+    }
+
+    function startNavigation() {
+      isNavigating = true;
+      document.getElementById('routePreviewCard').style.display = 'none';
+      document.getElementById('navBanner').style.display = 'flex';
+      document.getElementById('speedoMeter').style.display = 'flex';
+      document.getElementById('navTools').style.display = 'flex';
+      document.getElementById('navActiveControls').style.display = 'flex';
+
+      const routeCoords = [[33.3152, 44.3661], [33.3200, 44.3680], [33.3250, 44.3720]];
+      activePolyline = L.polyline(routeCoords, { color: '#38bdf8', weight: 6 }).addTo(map);
+      map.fitBounds(activePolyline.getBounds(), { padding: [50, 50] });
     }
 
     function finishTrip() {
       isNavigating = false;
-      document.getElementById('actionBtn').innerText = "انطلق الآن";
-      document.getElementById('actionBtn').classList.remove("btn-danger");
-      document.getElementById('navBanner').classList.remove("active");
-      document.getElementById('routePreview').style.display = "none";
+      document.getElementById('navBanner').style.display = 'none';
+      document.getElementById('speedoMeter').style.display = 'none';
+      document.getElementById('navTools').style.display = 'none';
+      document.getElementById('navActiveControls').style.display = 'none';
+      document.getElementById('searchTrigger').style.display = 'flex';
 
       if (activePolyline) map.removeLayer(activePolyline);
-      
-      document.getElementById('arrivalModal').classList.add("active");
+      showScreen('arrivedScreen');
     }
 
-    function closeArrivalModal() {
-      document.getElementById('arrivalModal').classList.remove("active");
-      recenterMap();
+    function toggleVoice() {
+      soundMuted = !soundMuted;
+      document.getElementById('voiceToggle').innerHTML = soundMuted ? '<i class="fa-solid fa-volume-xmark" style="color: #ef4444;"></i>' : '<i class="fa-solid fa-volume-high"></i>';
     }
 
-    function recenterMap() {
-      map.setView([33.3152, 44.3661], 15);
+    function recenterMap() { map.setView([33.3152, 44.3661], 15); }
+
+    function exitApp() {
+      if (confirm("هل ترغب في الخروج وإغلاق التطبيق؟")) {
+        window.close();
+      }
     }
   </script>
 </body>
