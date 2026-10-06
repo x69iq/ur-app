@@ -1,316 +1,324 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  SafeAreaView,
-  StatusBar,
-  Animated,
-  Dimensions
-} from 'react-native';
-import {
-  MapPin,
-  Navigation,
-  Volume2,
-  VolumeX,
-  Search,
-  Settings,
-  X,
-  Clock,
-  Compass,
-  Zap,
-  Check,
-  Shield,
-  Flag,
-  RotateCcw,
-  Music,
-  AlertTriangle,
-  ChevronRight
-} from 'lucide-react-native';
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>أُور - خرائط وملاحة العراق</title>
 
-const { width, height } = Dimensions.get('window');
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
-export default function UrNavigationApp() {
-  // الحالة العامة للتطبيق
-  const [currentStep, setCurrentStep] = useState<'onboarding' | 'main' | 'route_preview' | 'navigating' | 'arrived' | 'settings'>('onboarding');
-  const [onboardingSlide, setOnboardingSlide] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [voiceMode, setVoiceMode] = useState<'full' | 'essentials' | 'mute'>('essentials');
-  const [isCentered, setIsCentered] = useState(true);
-  const [selectedPin, setSelectedPin] = useState<string | null>(null);
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      user-select: none;
+    }
 
-  // شاشات التهيئة (Onboarding)
-  const slides = [
-    { title: "مسارك الأنسب، دائماً", desc: "خوارزميات ذكية لتفادي الاختناقات المرورية وحساب دقيق لوقت الوصول." },
-    { title: "عينك الحية على الطريق", desc: "تحديثات وتنبيهات مباشرة لحظة بلحظة عن حالة الشوارع من السائقين." },
-    { title: "استكشف مدينتك بذكاء", desc: "احفظ وجهاتك المفضلة وانطلق نحو وجهتك بلمسة واحدة." }
-  ];
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0f172a;
+      color: #ffffff;
+    }
 
-  // ==========================================
-  // 1. شاشة التهيئة (Onboarding View)
-  // ==========================================
-  if (currentStep === 'onboarding') {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a' }}>
-        <StatusBar barStyle="light-content" />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-          <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: '#0284c7', justifyContent: 'center', alignItems: 'center', marginBottom: 40 }}>
-            <Compass size={56} color="#ffffff" />
-          </View>
-          <Text style={{ color: '#ffffff', fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 12 }}>
-            {slides[onboardingSlide].title}
-          </Text>
-          <Text style={{ color: '#94a3b8', fontSize: 16, textAlign: 'center', paddingHorizontal: 16, marginBottom: 40, lineHeight: 24 }}>
-            {slides[onboardingSlide].desc}
-          </Text>
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
 
-          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 40 }}>
-            {slides.map((_, i) => (
-              <View key={i} style={{ width: i === onboardingSlide ? 24 : 8, height: 8, borderRadius: 4, backgroundColor: i === onboardingSlide ? '#0284c7' : '#334155' }} />
-            ))}
-          </View>
+    /* الشريط العلوي للتوجيه */
+    .nav-banner {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      background: #0284c7;
+      border-radius: 18px;
+      padding: 16px 20px;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
 
-          <TouchableOpacity
-            style={{ width: '100%', backgroundColor: '#0284c7', paddingVertical: 16, borderRadius: 16, alignItems: 'center', marginBottom: 12 }}
-            onPress={() => {
-              if (onboardingSlide < slides.length - 1) setOnboardingSlide(onboardingSlide + 1);
-              else setCurrentStep('main');
-            }}
-          >
-            <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold' }}>
-              {onboardingSlide === slides.length - 1 ? 'انطلق الآن' : 'التالي'}
-            </Text>
-          </TouchableOpacity>
+    .nav-banner.active {
+      display: flex;
+    }
 
-          <TouchableOpacity onPress={() => setCurrentStep('main')}>
-            <Text style={{ color: '#64748b', fontSize: 15 }}>تخطي</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+    .nav-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
 
-  // ==========================================
-  // 2. شاشة الملاحة الحية (Active Navigation View)
-  // ==========================================
-  if (currentStep === 'navigating') {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#090d16' }}>
-        <StatusBar barStyle="light-content" />
-        
-        {/* الشريط العلوي للتوجيه (Maneuver Banner) */}
-        <View style={{ backgroundColor: '#0284c7', padding: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, zIndex: 10 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-              <Navigation size={40} color="#ffffff" style={{ transform: [{ rotate: '45deg' }] }} />
-              <View>
-                <Text style={{ color: '#ffffff', fontSize: 26, fontWeight: 'bold' }}>70 م</Text>
-                <Text style={{ color: '#e0f2fe', fontSize: 16 }}>انعطف يميناً نحو شارع كركوك</Text>
-              </View>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ color: '#bae6fd', fontSize: 12 }}>ثم</Text>
-              <Navigation size={20} color="#ffffff" style={{ transform: [{ rotate: '90deg' }] }} />
-            </View>
-          </View>
-        </View>
+    .nav-info i {
+      font-size: 32px;
+    }
 
-        {/* الخريطة والملاحة الحية */}
-        <View style={{ flex: 1, position: 'relative', backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}>
-          
-          {/* محاكاة مسار الخريطة (التلاشي الديناميكي للمسار المقطوع) */}
-          <View style={{ position: 'absolute', width: 6, height: 250, backgroundColor: '#334155', borderRadius: 3, top: 50 }} /> {/* المسار القديم الممتص */}
-          <View style={{ position: 'absolute', width: 8, height: 200, backgroundColor: '#38bdf8', borderRadius: 4, bottom: 100 }} /> {/* المسار المتبقي المضيء */}
+    .nav-text .dist {
+      font-size: 24px;
+      font-weight: bold;
+    }
 
-          {/* مؤشر موقع السيارة */}
-          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(56, 189, 248, 0.2)', justifyContent: 'center', alignItems: 'center', zIndex: 5 }}>
-            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#0284c7', justifyContent: 'center', alignItems: 'center' }}>
-              <Navigation size={18} color="#ffffff" />
-            </View>
-          </View>
+    .nav-text .street {
+      font-size: 14px;
+      opacity: 0.9;
+    }
 
-          {/* الأزرار العائمة جانباً */}
-          <View style={{ position: 'absolute', right: 16, top: 20, gap: 12 }}>
-            <TouchableOpacity style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#1e293b', justifyContent: 'center', alignItems: 'center' }}>
-              <Music size={20} color="#ffffff" />
-            </TouchableOpacity>
-            <TouchableOpacity style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#1e293b', justifyContent: 'center', alignItems: 'center' }} onPress={() => setVoiceMode(voiceMode === 'mute' ? 'essentials' : 'mute')}>
-              {voiceMode === 'mute' ? <VolumeX size={20} color="#ef4444" /> : <Volume2 size={20} color="#ffffff" />}
-            </TouchableOpacity>
-            <TouchableOpacity style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#d97706', justifyContent: 'center', alignItems: 'center' }}>
-              <AlertTriangle size={20} color="#ffffff" />
-            </TouchableOpacity>
-          </View>
+    /* عداد السرعة */
+    .speedometer {
+      position: absolute;
+      bottom: 180px;
+      left: 16px;
+      width: 60px;
+      height: 60px;
+      background: #1e293b;
+      border: 2px solid #0284c7;
+      border-radius: 30px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
 
-          {/* عداد السرعة الذكي */}
-          <View style={{ position: 'absolute', left: 16, bottom: 20, width: 60, height: 60, borderRadius: 30, backgroundColor: '#1e293b', borderBottomColor: '#0284c7', borderWidth: 2, justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold' }}>45</Text>
-            <Text style={{ color: '#94a3b8', fontSize: 9 }}>كم/س</Text>
-          </View>
-        </View>
+    .speed-val {
+      font-size: 18px;
+      font-weight: bold;
+    }
 
-        {/* الشريط السفلي للرحلة */}
-        <View style={{ backgroundColor: '#1e293b', padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View>
-            <Text style={{ color: '#ffffff', fontSize: 24, fontWeight: 'bold' }}>23:49</Text>
-            <Text style={{ color: '#94a3b8', fontSize: 14 }}>2.3 كم • 7 دقائق متبقية</Text>
-          </View>
-          <TouchableOpacity style={{ backgroundColor: '#ef4444', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 }} onPress={() => setCurrentStep('arrived')}>
-            <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>إنهاء</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+    .speed-unit {
+      font-size: 8px;
+      color: #94a3b8;
+    }
 
-  // ==========================================
-  // 3. شاشة الوصول (Arrival View)
-  // ==========================================
-  if (currentStep === 'arrived') {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <StatusBar barStyle="light-content" />
-        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#22c55e', justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
-          <Flag size={40} color="#ffffff" />
-        </View>
-        <Text style={{ color: '#ffffff', fontSize: 26, fontWeight: 'bold', marginBottom: 8 }}>وصلت إلى وجهتك!</Text>
-        <Text style={{ color: '#94a3b8', fontSize: 16, marginBottom: 32 }}>استغرقت الرحلة 7 دقائق (2.3 كم)</Text>
+    /* القائمة السفلية */
+    .bottom-sheet {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #0f172a;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 20px;
+      z-index: 1000;
+      border-top: 1px solid #334155;
+      box-shadow: 0 -5px 25px rgba(0,0,0,0.5);
+    }
 
-        <TouchableOpacity style={{ width: '100%', backgroundColor: '#0284c7', paddingVertical: 16, borderRadius: 16, alignItems: 'center', marginBottom: 12 }} onPress={() => setCurrentStep('main')}>
-          <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold' }}>تم العودة للخريطة</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
+    .search-box {
+      background: #1e293b;
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
 
-  // ==========================================
-  // 4. شاشة الإعدادات (Settings View)
-  // ==========================================
-  if (currentStep === 'settings') {
-    return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a' }}>
-        <StatusBar barStyle="light-content" />
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, borderBottomWidth: 1, borderBottomColor: '#334155' }}>
-          <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: 'bold' }}>الإعدادات</Text>
-          <TouchableOpacity onPress={() => setCurrentStep('main')}>
-            <X size={24} color="#ffffff" />
-          </TouchableOpacity>
-        </View>
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 16px;
+      width: 100%;
+    }
 
-        <ScrollView style={{ flex: 1, padding: 20 }}>
-          <Text style={{ color: '#0284c7', fontSize: 14, fontWeight: 'bold', marginBottom: 12 }}>نمط القيادة والمركبة</Text>
-          <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 24, gap: 16 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: '#ffffff', fontSize: 16 }}>نوع المركبة الافتراضي</Text>
-              <Text style={{ color: '#94a3b8' }}>سيارة خاصة</Text>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: '#ffffff', fontSize: 16 }}>تجنب الطرق المزدحمة</Text>
-              <Check size={20} color="#0284c7" />
-            </View>
-          </View>
+    .btn-primary {
+      width: 100%;
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-          <Text style={{ color: '#0284c7', fontSize: 14, fontWeight: 'bold', marginBottom: 12 }}>الصوت والتوجيه</Text>
-          <View style={{ backgroundColor: '#1e293b', borderRadius: 16, padding: 16, marginBottom: 24, gap: 16 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ color: '#ffffff', fontSize: 16 }}>نمط التوجيه الصوتي</Text>
-              <Text style={{ color: '#94a3b8' }}>مختصر</Text>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
+    .btn-danger {
+      background: #ef4444;
+    }
 
-  // ==========================================
-  // 5. الواجهة الرئيسية والتخطيط (Main Home View)
-  // ==========================================
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a' }}>
-      <StatusBar barStyle="light-content" />
+    .floating-btn {
+      position: absolute;
+      right: 16px;
+      bottom: 180px;
+      width: 48px;
+      height: 48px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 24px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      cursor: pointer;
+    }
+
+    /* نافذة الوصول للوجهة */
+    .arrival-modal {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.95);
+      z-index: 2000;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .arrival-modal.active {
+      display: flex;
+    }
+
+    .icon-box {
+      width: 80px;
+      height: 80px;
+      background: #22c55e;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- الخريطة -->
+  <div id="map"></div>
+
+  <!-- شريط التوجيه المباشر -->
+  <div class="nav-banner" id="navBanner">
+    <div class="nav-info">
+      <i class="fa-solid fa-turn-right"></i>
+      <div class="nav-text">
+        <div class="dist" id="turnDist">70 م</div>
+        <div class="street" id="nextStreet">انعطف يميناً نحو طريق كركوك - بغداد</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- عداد السرعة -->
+  <div class="speedometer">
+    <div class="speed-val" id="speedVal">45</div>
+    <div class="speed-unit">كم/س</div>
+  </div>
+
+  <!-- زر إعادة التوسيط -->
+  <div class="floating-btn" id="recenterBtn" onclick="recenterMap()">
+    <i class="fa-solid fa-location-crosshairs"></i>
+  </div>
+
+  <!-- الشريط السفلي -->
+  <div class="bottom-sheet" id="bottomSheet">
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8;"></i>
+      <input type="text" placeholder="إلى أين تتجه اليوم؟" id="searchInput" />
+    </div>
+
+    <div id="routePreview" style="display: none; margin-bottom: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 20px; font-weight: bold;">7 دقائق</span>
+        <span style="color: #94a3b8;">2.3 كم</span>
+      </div>
+      <p style="color: #94a3b8; font-size: 13px; margin-bottom: 12px;">عبر طريق كركوك - بغداد • أفضل مسار</p>
+    </div>
+
+    <button class="btn-primary" id="actionBtn" onclick="toggleNavigation()">انطلق الآن</button>
+  </div>
+
+  <!-- نافذة الوصول للوجهة -->
+  <div class="arrival-modal" id="arrivalModal">
+    <div class="icon-box"><i class="fa-solid fa-flag-checkered"></i></div>
+    <h2 style="font-size: 24px; margin-bottom: 8px;">وصلت إلى وجهتك بالسلامة!</h2>
+    <p style="color: #94a3b8; margin-bottom: 24px;">استغرقت الرحلة 7 دقائق (2.3 كم)</p>
+    <button class="btn-primary" onclick="closeArrivalModal()">العودة للخريطة</button>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    const map = L.map('map', { zoomControl: false }).setView([33.3152, 44.3661], 14);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap & CartoDB'
+    }).addTo(map);
+
+    let isNavigating = false;
+    let userMarker, activePolyline;
+
+    const routeCoords = [
+      [33.3152, 44.3661],
+      [33.3200, 44.3680],
+      [33.3250, 44.3720]
+    ];
+
+    userMarker = L.marker([33.3152, 44.3661]).addTo(map);
+
+    function toggleNavigation() {
+      const btn = document.getElementById('actionBtn');
+      const banner = document.getElementById('navBanner');
+      const preview = document.getElementById('routePreview');
+
+      if (!isNavigating) {
+        isNavigating = true;
+        btn.innerText = "إنهاء الرحلة";
+        btn.classList.add("btn-danger");
+        banner.classList.add("active");
+        preview.style.display = "block";
+
+        activePolyline = L.polyline(routeCoords, { color: '#38bdf8', weight: 6, opacity: 0.9 }).addTo(map);
+        map.fitBounds(activePolyline.getBounds(), { padding: [50, 50] });
+
+        setTimeout(() => {
+          if (isNavigating) finishTrip();
+        }, 6000);
+
+      } else {
+        finishTrip();
+      }
+    }
+
+    function finishTrip() {
+      isNavigating = false;
+      document.getElementById('actionBtn').innerText = "انطلق الآن";
+      document.getElementById('actionBtn').classList.remove("btn-danger");
+      document.getElementById('navBanner').classList.remove("active");
+      document.getElementById('routePreview').style.display = "none";
+
+      if (activePolyline) map.removeLayer(activePolyline);
       
-      {/* الخريطة الرئيسية */}
-      <View style={{ flex: 1, position: 'relative', backgroundColor: '#1e293b', justifyContent: 'center', alignItems: 'center' }}>
-        
-        {/* خلفية الخريطة التفاعلية الضمنية */}
-        <Text style={{ color: '#475569', fontSize: 18 }}>[ الخريطة التفاعلية الحية ]</Text>
+      document.getElementById('arrivalModal').classList.add("active");
+    }
 
-        {/* زر إعادة التوسيط Autocenter Button */}
-        <TouchableOpacity 
-          style={{ position: 'absolute', right: 16, bottom: 220, width: 48, height: 48, borderRadius: 24, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center', borderSize: 1, borderColor: '#334155' }}
-          onPress={() => setIsCentered(true)}
-        >
-          <Compass size={24} color={isCentered ? "#0284c7" : "#ffffff"} />
-        </TouchableOpacity>
+    function closeArrivalModal() {
+      document.getElementById('arrivalModal').classList.remove("active");
+      recenterMap();
+    }
 
-        {/* زر الإعدادات */}
-        <TouchableOpacity 
-          style={{ position: 'absolute', left: 16, top: 20, width: 44, height: 44, borderRadius: 22, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}
-          onPress={() => setCurrentStep('settings')}
-        >
-          <Settings size={22} color="#ffffff" />
-        </TouchableOpacity>
-
-        {/* بطاقة النقطة المحددة بنقرة مطولة (Long-press Context Card) */}
-        {selectedPin && (
-          <View style={{ position: 'absolute', top: 120, width: width - 40, backgroundColor: '#0f172a', borderRadius: 20, padding: 16, borderSize: 1, borderColor: '#334155' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ color: '#ffffff', fontSize: 18, fontWeight: 'bold' }}>حي الشعب - بغداد</Text>
-              <TouchableOpacity onPress={() => setSelectedPin(null)}><X size={20} color="#94a3b8" /></TouchableOpacity>
-            </View>
-            <TouchableOpacity style={{ backgroundColor: '#0284c7', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }} onPress={() => { setSelectedPin(null); setCurrentStep('route_preview'); }}>
-              <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>🚀 التوجيه فوراً</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      {/* لوحة التحكم والوجهات السفلية (Bottom Sheet Drawer) */}
-      <View style={{ backgroundColor: '#0f172a', padding: 20, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: '#334155' }}>
-        
-        {/* شريط البحث */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', borderRadius: 16, paddingHorizontal: 16, height: 52, marginBottom: 16 }}>
-          <Search size={20} color="#94a3b8" style={{ marginLeft: 8 }} />
-          <TextInput
-            placeholder="إلى أين تتجه اليوم؟"
-            placeholderTextColor="#94a3b8"
-            style={{ flex: 1, color: '#ffffff', textAlign: 'right', fontSize: 16 }}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        {/* الكبسولات السريعة (Quick Destinations) */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row', marginBottom: 16 }}>
-          <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginLeft: 8 }} onPress={() => setCurrentStep('route_preview')}>
-            <MapPin size={16} color="#0284c7" style={{ marginLeft: 6 }} />
-            <Text style={{ color: '#ffffff' }}>البيت</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginLeft: 8 }} onPress={() => setCurrentStep('route_preview')}>
-            <Zap size={16} color="#eab308" style={{ marginLeft: 6 }} />
-            <Text style={{ color: '#ffffff' }}>العمل</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e293b', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, marginLeft: 8 }} onPress={() => setSelectedPin('custom_point')}>
-            <Text style={{ color: '#ffffff' }}>+ إضافة وجهة</Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {/* معاينة المسار والتأكيد (Route Preview Overlay) */}
-        {currentStep === 'route_preview' && (
-          <View style={{ backgroundColor: '#1e293b', borderRadius: 20, padding: 16, borderSize: 1, borderColor: '#0284c7' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={{ color: '#ffffff', fontSize: 22, fontWeight: 'bold' }}>7 دقائق</Text>
-              <Text style={{ color: '#94a3b8', fontSize: 14 }}>2.3 كم</Text>
-            </View>
-            <Text style={{ color: '#94a3b8', fontSize: 14, marginBottom: 16 }}>عبر طريق كركوك - بغداد • حركة مرور سلسة</Text>
-            <TouchableOpacity style={{ backgroundColor: '#0284c7', paddingVertical: 14, borderRadius: 14, alignItems: 'center' }} onPress={() => setCurrentStep('navigating')}>
-              <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: 'bold' }}>انطلق الآن</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </SafeAreaView>
-  );
-}
+    function recenterMap() {
+      map.setView([33.3152, 44.3661], 15);
+    }
+  </script>
+</body>
+</html>
